@@ -1,6 +1,5 @@
-venv/
-cleaned_data/
-raw_data/
+archive/
+chroma_index/
+raw/
 .env
-PerformanceAnalysis.docx
-mistral-7b-instruct-v0.1.Q4_K_M.gguf
+record_manager_cache.sql
