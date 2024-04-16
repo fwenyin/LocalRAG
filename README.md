@@ -25,6 +25,7 @@ Clone the repository and install the dependencies:
 git clone https://github.com/fwenyin/GenAI.git
 cd [repository directory]
 pip install -r requirements.txt
+```
 
 ## Documentation
 The full documentation, which was generated with Sphinx, is available in the docs/ directory. Open the index.html file in a web browser to access it.
