@@ -1,0 +1,6 @@
+venv/
+cleaned_data/
+raw_data/
+.env
+PerformanceAnalysis.docx
+mistral-7b-instruct-v0.1.Q4_K_M.gguf
