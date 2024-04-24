@@ -21,8 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="embedding module" href="embedding.html" />
-    <link rel="prev" title="Welcome to LocalRAG’s documentation!" href="index.html" /> 
+    <link rel="next" title="record_manager_embedding module" href="record_manager_embedding.html" />
+    <link rel="prev" title="Welcome to Local RAG’s documentation!" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -47,8 +47,10 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">src</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="embedding.html">embedding module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record_manager_embedding.html">record_manager_embedding module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="path_embedding.html">path_embedding module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="query.html">query module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.html">app module</a></li>
 </ul>
 </li>
 </ul>
@@ -81,27 +83,50 @@
 <h1>src<a class="headerlink" href="#src" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="embedding.html">embedding module</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="embedding.html#embedding.DocumentHandler"><code class="docutils literal notranslate"><span class="pre">DocumentHandler</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="embedding.html#embedding.DocumentHandler.create_loader"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.create_loader()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="embedding.html#embedding.DocumentHandler.load_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.load_documents()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="embedding.html#embedding.DocumentHandler.split_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.split_documents()</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="record_manager_embedding.html">record_manager_embedding module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.DocumentHandler"><code class="docutils literal notranslate"><span class="pre">DocumentHandler</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.DocumentHandler.create_loader"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.create_loader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.DocumentHandler.load_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.load_documents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.DocumentHandler.split_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.split_documents()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="embedding.html#embedding.EmbeddingManager"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="embedding.html#embedding.EmbeddingManager.add_index"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.add_index()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="embedding.html#embedding.EmbeddingManager.clear_index"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.clear_index()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="embedding.html#embedding.EmbeddingManager.setup_vectorstore"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.setup_vectorstore()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.EmbeddingManager"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.EmbeddingManager.add_index"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.add_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.EmbeddingManager.clear_index"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.clear_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.EmbeddingManager.setup_vectorstore"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.setup_vectorstore()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="embedding.html#embedding.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="record_manager_embedding.html#record_manager_embedding.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="path_embedding.html">path_embedding module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler"><code class="docutils literal notranslate"><span class="pre">DocumentHandler</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler.check_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.check_documents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler.create_loader"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.create_loader()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler.load_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.load_documents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler.load_metadata"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.load_metadata()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler.save_metadata"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.save_metadata()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.DocumentHandler.split_documents"><code class="docutils literal notranslate"><span class="pre">DocumentHandler.split_documents()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="path_embedding.html#path_embedding.EmbeddingManager"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="path_embedding.html#path_embedding.EmbeddingManager.setup_vectorstore"><code class="docutils literal notranslate"><span class="pre">EmbeddingManager.setup_vectorstore()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="path_embedding.html#path_embedding.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="query.html">query module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="query.html#query.MyVectorStoreRetriever"><code class="docutils literal notranslate"><span class="pre">MyVectorStoreRetriever</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="query.html#query.QueryHandler"><code class="docutils literal notranslate"><span class="pre">QueryHandler</span></code></a><ul>
-<li class="toctree-l3"><a class="reference internal" href="query.html#query.QueryHandler.ask_question"><code class="docutils literal notranslate"><span class="pre">QueryHandler.ask_question()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="query.html#query.QueryHandler.handle_question"><code class="docutils literal notranslate"><span class="pre">QueryHandler.handle_question()</span></code></a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="app.html">app module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="app.html#app.clean_text"><code class="docutils literal notranslate"><span class="pre">clean_text()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="app.html#app.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -112,8 +137,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to LocalRAG’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="embedding.html" class="btn btn-neutral float-right" title="embedding module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Local RAG’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="record_manager_embedding.html" class="btn btn-neutral float-right" title="record_manager_embedding module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

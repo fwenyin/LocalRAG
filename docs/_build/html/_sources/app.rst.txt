@@ -1,7 +1,7 @@
-query module
+app module
 ============
 
-.. automodule:: query
+.. automodule:: app
    :members:
    :undoc-members:
    :show-inheritance:

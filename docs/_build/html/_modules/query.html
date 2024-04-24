@@ -90,21 +90,48 @@
 
 <span class="kn">from</span> <span class="nn">azure.identity</span> <span class="kn">import</span> <span class="n">AzureCliCredential</span>
 <span class="kn">from</span> <span class="nn">langchain_openai</span> <span class="kn">import</span> <span class="n">AzureOpenAIEmbeddings</span><span class="p">,</span> <span class="n">AzureChatOpenAI</span>
+<span class="kn">from</span> <span class="nn">langchain.schema.vectorstore</span> <span class="kn">import</span> <span class="n">VectorStoreRetriever</span>
+<span class="kn">from</span> <span class="nn">langchain.callbacks.manager</span> <span class="kn">import</span> <span class="n">CallbackManagerForRetrieverRun</span>
+<span class="kn">from</span> <span class="nn">langchain.schema.document</span> <span class="kn">import</span> <span class="n">Document</span>
 <span class="kn">from</span> <span class="nn">langchain_community.vectorstores</span> <span class="kn">import</span> <span class="n">Chroma</span>
 <span class="kn">from</span> <span class="nn">langchain.chains</span> <span class="kn">import</span> <span class="n">ConversationalRetrievalChain</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">dotenv</span> <span class="kn">import</span> <span class="n">load_dotenv</span>
 
 
 <span class="c1"># Set up logging</span>
-<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">CRITICAL</span><span class="p">,</span>
                     <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
 
 <span class="c1"># Set up environment for Azure Cognitive Services</span>
 <span class="n">load_dotenv</span><span class="p">()</span>
 <span class="n">credential</span> <span class="o">=</span> <span class="n">AzureCliCredential</span><span class="p">()</span>
-<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">credential</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span><span class="s2">&quot;https://cognitiveservices.azure.com/.default&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">token</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">credential</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span>
+    <span class="s2">&quot;https://cognitiveservices.azure.com/.default&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">token</span>
+
+
+<div class="viewcode-block" id="MyVectorStoreRetriever">
+<a class="viewcode-back" href="../query.html#query.MyVectorStoreRetriever">[docs]</a>
+<span class="k">class</span> <span class="nc">MyVectorStoreRetriever</span><span class="p">(</span><span class="n">VectorStoreRetriever</span><span class="p">):</span>
+    <span class="c1"># See https://github.com/langchain-ai/langchain/blob/61dd92f8215daef3d9cf1734b0d1f8c70c1571c3/libs/langchain/langchain/vectorstores/base.py#L500</span>
+    <span class="k">def</span> <span class="nf">_get_relevant_documents</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">run_manager</span><span class="p">:</span> <span class="n">CallbackManagerForRetrieverRun</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Document</span><span class="p">]:</span>
+        <span class="n">docs_and_similarities</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span><span class="o">.</span><span class="n">similarity_search_with_relevance_scores</span><span class="p">(</span>
+                <span class="n">query</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">search_kwargs</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Make the score part of the document metadata</span>
+        <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">similarity</span> <span class="ow">in</span> <span class="n">docs_and_similarities</span><span class="p">:</span>
+            <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">similarity</span>
+
+        <span class="n">docs</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span> <span class="k">for</span> <span class="n">doc</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">docs_and_similarities</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">docs</span></div>
+
 
 
 <div class="viewcode-block" id="QueryHandler">
@@ -112,47 +139,48 @@
 <span class="k">class</span> <span class="nc">QueryHandler</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Handles creating and managing a conversational query chain for retrieving answers.&quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings_name</span><span class="p">,</span> <span class="n">llm_name</span><span class="p">,</span> <span class="n">collection_name</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embedding_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">llm_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">collection_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the query handler with specified embeddings, language model, and collection name.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            embeddings_name (str): The name of the Azure deployment for generating embeddings.</span>
+<span class="sd">            embedding_function (Callable): Function used to generate embeddings.</span>
 <span class="sd">            llm_name (str): The name of the language model for the conversational chain.</span>
 <span class="sd">            collection_name (str): The name of the collection for storing embeddings.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">AzureOpenAIEmbeddings</span><span class="p">(</span><span class="n">azure_deployment</span><span class="o">=</span><span class="n">embeddings_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span> <span class="o">=</span> <span class="n">embedding_function</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">llm</span> <span class="o">=</span> <span class="n">AzureChatOpenAI</span><span class="p">(</span><span class="n">deployment_name</span><span class="o">=</span><span class="n">llm_name</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">Chroma</span><span class="p">(</span><span class="n">persist_directory</span><span class="o">=</span><span class="n">collection_name</span><span class="p">,</span> <span class="n">embedding_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">embeddings</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span><span class="o">.</span><span class="n">as_retriever</span><span class="p">(</span><span class="n">search_type</span><span class="o">=</span><span class="s2">&quot;mmr&quot;</span><span class="p">,</span> <span class="n">search_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;fetch_k&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">Chroma</span><span class="p">(</span>
+                <span class="n">persist_directory</span><span class="o">=</span><span class="n">collection_name</span><span class="p">,</span> <span class="n">embedding_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">retriever</span> <span class="o">=</span> <span class="n">MyVectorStoreRetriever</span><span class="p">(</span>
+                <span class="n">vectorstore</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span><span class="p">,</span> <span class="n">search_type</span><span class="o">=</span><span class="s2">&quot;similarity_score_threshold&quot;</span><span class="p">,</span> <span class="n">search_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;score_threshold&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">})</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">qa_chain</span> <span class="o">=</span> <span class="n">ConversationalRetrievalChain</span><span class="o">.</span><span class="n">from_llm</span><span class="p">(</span>
                 <span class="n">llm</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="p">,</span> <span class="n">chain_type</span><span class="o">=</span><span class="s2">&quot;stuff&quot;</span><span class="p">,</span> <span class="n">retriever</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">retriever</span><span class="p">,</span> <span class="n">return_source_documents</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">chat_history</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;QueryHandler initialized successfully.&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to initialize QueryHandler: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">raise</span>
 
-<div class="viewcode-block" id="QueryHandler.ask_question">
-<a class="viewcode-back" href="../query.html#query.QueryHandler.ask_question">[docs]</a>
-    <span class="k">def</span> <span class="nf">ask_question</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+<div class="viewcode-block" id="QueryHandler.handle_question">
+<a class="viewcode-back" href="../query.html#query.QueryHandler.handle_question">[docs]</a>
+    <span class="k">def</span> <span class="nf">handle_question</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">chat_history</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Asks a question and retrieves an answer using the conversational retrieval chain.</span>
+<span class="sd">        Handle a question and returns an answer using the conversational retrieval chain.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            query (str): The question to be asked.</span>
+<span class="sd">            chat_history (List[Dict[str, str]]): A list of previous chat messages represented as dictionaries.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            dict: The result containing the answer and other relevant information.</span>
+<span class="sd">            Dict[str, any]: The result containing the answer and other relevant information.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qa_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">({</span><span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span> <span class="s2">&quot;chat_history&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">chat_history</span><span class="p">})</span>
-            
-            <span class="c1"># Update chat history with the current query and its answer</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">chat_history</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">query</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">]))</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Question asked: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">, Answer received: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;answer&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qa_chain</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span>
+                <span class="p">{</span><span class="s2">&quot;question&quot;</span><span class="p">:</span> <span class="n">query</span><span class="p">,</span> <span class="s2">&quot;chat_history&quot;</span><span class="p">:</span> <span class="n">chat_history</span><span class="p">})</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Question asked: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">, Answer received: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;answer&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
             <span class="k">return</span> <span class="n">result</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error asking question: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">, Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>

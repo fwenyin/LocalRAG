@@ -21,7 +21,8 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="embedding module" href="embedding.html" /> 
+    <link rel="next" title="app module" href="app.html" />
+    <link rel="prev" title="path_embedding module" href="path_embedding.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -46,14 +47,17 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">src</a><ul class="current">
-<li class="toctree-l2"><a class="reference internal" href="embedding.html">embedding module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="record_manager_embedding.html">record_manager_embedding module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="path_embedding.html">path_embedding module</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">query module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#query.MyVectorStoreRetriever"><code class="docutils literal notranslate"><span class="pre">MyVectorStoreRetriever</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#query.QueryHandler"><code class="docutils literal notranslate"><span class="pre">QueryHandler</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#query.QueryHandler.ask_question"><code class="docutils literal notranslate"><span class="pre">QueryHandler.ask_question()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#query.QueryHandler.handle_question"><code class="docutils literal notranslate"><span class="pre">QueryHandler.handle_question()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="app.html">app module</a></li>
 </ul>
 </li>
 </ul>
@@ -98,23 +102,32 @@
 <p>Usage:
 This module can be imported where there is a need to incorporate question answering functionalities into applications, leveraging deep learning models for natural language understanding and retrieval.</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="query.MyVectorStoreRetriever">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">query.</span></span><span class="sig-name descname"><span class="pre">MyVectorStoreRetriever</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tags</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vectorstore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">VectorStore</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'similarity'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/query.html#MyVectorStoreRetriever"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query.MyVectorStoreRetriever" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">VectorStoreRetriever</span></code></p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="query.QueryHandler">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">query.</span></span><span class="sig-name descname"><span class="pre">QueryHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embeddings_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/query.html#QueryHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query.QueryHandler" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">query.</span></span><span class="sig-name descname"><span class="pre">QueryHandler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">embedding_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">collection_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/query.html#QueryHandler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query.QueryHandler" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Handles creating and managing a conversational query chain for retrieving answers.</p>
 <dl class="py method">
-<dt class="sig sig-object py" id="query.QueryHandler.ask_question">
-<span class="sig-name descname"><span class="pre">ask_question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/query.html#QueryHandler.ask_question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query.QueryHandler.ask_question" title="Link to this definition"></a></dt>
-<dd><p>Asks a question and retrieves an answer using the conversational retrieval chain.</p>
+<dt class="sig sig-object py" id="query.QueryHandler.handle_question">
+<span class="sig-name descname"><span class="pre">handle_question</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chat_history</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/query.html#QueryHandler.handle_question"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query.QueryHandler.handle_question" title="Link to this definition"></a></dt>
+<dd><p>Handle a question and returns an answer using the conversational retrieval chain.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>query</strong> (<em>str</em>) – The question to be asked.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<em>str</em>) – The question to be asked.</p></li>
+<li><p><strong>chat_history</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – A list of previous chat messages represented as dictionaries.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>The result containing the answer and other relevant information.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
+<dd class="field-odd"><p>Dict[str, any]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -127,7 +140,8 @@ This module can be imported where there is a need to incorporate question answer
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="embedding.html" class="btn btn-neutral float-left" title="embedding module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="path_embedding.html" class="btn btn-neutral float-left" title="path_embedding module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="app.html" class="btn btn-neutral float-right" title="app module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

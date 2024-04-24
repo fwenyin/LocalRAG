@@ -4,5 +4,7 @@ src
 .. toctree::
    :maxdepth: 4
 
-   embedding
+   record_manager_embedding
+   path_embedding
    query
+   app

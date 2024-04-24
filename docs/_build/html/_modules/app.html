@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>app &mdash; LocalRAG 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            LocalRAG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">LocalRAG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">app</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for app</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Streamlit Chatbot RAG Integration Module. </span>
+
+<span class="sd">This module is designed for integrating the RAG pipeline with a Streamlit application to create a chatbot interface. It leverages the QueryHandler class from the query.py module to handle user queries and generate responses using the RAG model.</span>
+<span class="sd">This example makes use of HuggingFace Embeddings.</span>
+
+<span class="sd">Requirements:</span>
+<span class="sd">- Azure authentication is required to access Azure Cognitive Services. Use &#39;az login&#39; to authenticate the Azure CLI before running any operations.</span>
+<span class="sd">- In cases where the HTTPS connection exceeds maximum retries due to network issues, execute the following command:</span>
+<span class="sd">    az account get-access-token --resource https://cognitiveservices.azure.com --query &quot;accessToken&quot; -o tsv</span>
+
+<span class="sd">Usage:</span>
+<span class="sd">This module can be used as a POC of the RAG pipeline. It can be run directly to start a Streamlit application with chatbot functionality, allowing users to interact with the RAG model through a simple text interface.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">streamlit</span> <span class="k">as</span> <span class="nn">st</span>
+<span class="kn">import</span> <span class="nn">streamlit_chat</span> <span class="k">as</span> <span class="nn">stc</span>
+<span class="kn">import</span> <span class="nn">bleach</span>
+<span class="kn">from</span> <span class="nn">langchain_community.embeddings</span> <span class="kn">import</span> <span class="n">HuggingFaceEmbeddings</span>
+<span class="kn">from</span> <span class="nn">query</span> <span class="kn">import</span> <span class="n">QueryHandler</span>
+
+
+<span class="n">st</span><span class="o">.</span><span class="n">set_page_config</span><span class="p">(</span><span class="n">layout</span><span class="o">=</span><span class="s2">&quot;wide&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="clean_text">
+<a class="viewcode-back" href="../app.html#app.clean_text">[docs]</a>
+<span class="k">def</span> <span class="nf">clean_text</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cleans the input text by replacing sequences of whitespace characters with a single space </span>
+<span class="sd">    and stripping leading and trailing whitespace.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text (str): The text to be cleaned.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: The cleaned text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">cleaned_text</span> <span class="o">=</span> <span class="n">bleach</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">strip</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">cleaned_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(\n\s*)+\n&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">cleaned_text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;\s+&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">cleaned_text</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">cleaned_text</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../app.html#app.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">query_handler</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main function to run the Streamlit application with chatbot functionality.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        query_handler (QueryHandler): The query handler object to handle user queries and generate responses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s1">&#39;messages&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;messages&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="s1">&#39;source_docs&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;source_docs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="s1">&#39;pending_response&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;pending_response&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="s1">&#39;chat_history&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;chat_history&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">st</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;FC Chatbot&#39;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">messages</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">stc</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s2">&quot;content&quot;</span><span class="p">],</span> <span class="n">is_user</span><span class="o">=</span><span class="p">(</span><span class="n">message</span><span class="p">[</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;user&quot;</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">avatar_style</span><span class="o">=</span><span class="s2">&quot;avataaars&quot;</span> <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;user&quot;</span> <span class="k">else</span> <span class="s2">&quot;bottts&quot;</span><span class="p">)</span>
+        <span class="c1"># with st.chat_message(message[&quot;role&quot;]):</span>
+        <span class="c1">#    st.markdown(message[&quot;content&quot;])</span>
+
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">sidebar</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">subheader</span><span class="p">(</span><span class="s2">&quot;Source Documents&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">doc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">source_docs</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">container</span><span class="p">():</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;#### Document Content:&quot;</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">text_area</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">doc</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">],</span> <span class="n">height</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;doc_content_</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">disabled</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="c1">#st.markdown(f&quot;\&quot;{doc[&#39;content&#39;]}\&quot;&quot;)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Source:** </span><span class="si">{</span><span class="n">doc</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Content Match Score:** </span><span class="si">{</span><span class="n">doc</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="s2">&quot;---&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">st</span><span class="o">.</span><span class="n">form</span><span class="p">(</span><span class="s2">&quot;Question&quot;</span><span class="p">,</span> <span class="n">clear_on_submit</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">prompt</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">text_input</span><span class="p">(</span><span class="s2">&quot;Enter a message...&quot;</span><span class="p">)</span>
+        <span class="n">submitted</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">form_submit_button</span><span class="p">(</span><span class="s2">&quot;Send&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">submitted</span> <span class="ow">and</span> <span class="n">prompt</span><span class="p">:</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">prompt</span><span class="p">})</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;pending_response&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">rerun</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;pending_response&#39;</span><span class="p">]:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">query_handler</span><span class="o">.</span><span class="n">handle_question</span><span class="p">(</span>
+            <span class="n">prompt</span><span class="p">,</span> <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;chat_history&#39;</span><span class="p">])</span>
+        <span class="n">answer</span> <span class="o">=</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">])</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;chat_history&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">prompt</span><span class="p">,</span> <span class="n">answer</span><span class="p">))</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;assistant&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">answer</span><span class="p">})</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="o">.</span><span class="n">source_docs</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="n">clean_text</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">),</span>
+                                         <span class="s1">&#39;source&#39;</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;source&#39;</span><span class="p">],</span>
+                                         <span class="s1">&#39;score&#39;</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]}</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s1">&#39;source_documents&#39;</span><span class="p">]]</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">session_state</span><span class="p">[</span><span class="s1">&#39;pending_response&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">rerun</span><span class="p">()</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">query_handler</span> <span class="o">=</span> <span class="n">QueryHandler</span><span class="p">(</span><span class="n">embedding_function</span><span class="o">=</span><span class="n">HuggingFaceEmbeddings</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;embedding_models/baai/bge-small-en-v1.5&quot;</span><span class="p">),</span>
+                             <span class="n">llm_name</span><span class="o">=</span><span class="s2">&quot;ChatGpt&quot;</span><span class="p">,</span>
+                             <span class="n">collection_name</span><span class="o">=</span><span class="s2">&quot;chroma_index&quot;</span><span class="p">,</span>
+                             <span class="p">)</span>
+    <span class="n">main</span><span class="p">(</span><span class="n">query_handler</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Wen Yin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

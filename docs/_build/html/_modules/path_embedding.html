@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>path_embedding &mdash; LocalRAG 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            LocalRAG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">src</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">LocalRAG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">path_embedding</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for path_embedding</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Document Processing and Embedding Management Module. </span>
+
+<span class="sd">This module is designed for document processing and embedding management, utilizing Azure Cognitive Services for its operations. It specifically leverages the Azure OpenAI service to generate embeddings for documents.</span>
+<span class="sd">Dynamic path embedding by updating json file of documents that have been embedded, only documents that have new filenames will be embedded.</span>
+
+<span class="sd">Requirements:</span>
+<span class="sd">- Azure authentication is required to access Azure Cognitive Services. Use &#39;az login&#39; to authenticate the Azure CLI before running any operations.</span>
+<span class="sd">- In cases where the HTTPS connection exceeds maximum retries due to network issues, execute the following command:</span>
+<span class="sd">    az account get-access-token --resource https://cognitiveservices.azure.com --query &quot;accessToken&quot; -o tsv</span>
+
+<span class="sd">Classes:</span>
+<span class="sd">- DocumentHandler: Manages the loading, preprocessing, and splitting of documents into manageable chunks.</span>
+<span class="sd">- EmbeddingManager: Handles the generation of embeddings and manages vector storage operations, ensuring efficient data retrieval and storage.</span>
+
+<span class="sd">Usage:</span>
+<span class="sd">This module can be imported to integrate document processing and embedding functionalities into applications requiring advanced text analysis and processing capabilities.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">unstructured.cleaners.core</span> <span class="kn">import</span> <span class="n">clean</span><span class="p">,</span> <span class="n">group_broken_paragraphs</span>
+<span class="kn">from</span> <span class="nn">langchain_community.document_loaders</span> <span class="kn">import</span> <span class="n">DirectoryLoader</span><span class="p">,</span> <span class="n">UnstructuredFileLoader</span>
+<span class="kn">from</span> <span class="nn">langchain_community.vectorstores</span> <span class="kn">import</span> <span class="n">Chroma</span>
+<span class="kn">from</span> <span class="nn">langchain_community.embeddings</span> <span class="kn">import</span> <span class="n">HuggingFaceEmbeddings</span>
+<span class="kn">from</span> <span class="nn">langchain.text_splitter</span> <span class="kn">import</span> <span class="n">RecursiveCharacterTextSplitter</span>
+<span class="kn">from</span> <span class="nn">langchain_openai</span> <span class="kn">import</span> <span class="n">AzureOpenAIEmbeddings</span>
+<span class="kn">from</span> <span class="nn">azure.identity</span> <span class="kn">import</span> <span class="n">AzureCliCredential</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">dotenv</span> <span class="kn">import</span> <span class="n">load_dotenv</span>
+
+
+<span class="c1"># Set up logging</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
+                    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="c1"># Set up environment for Azure Cognitive Services</span>
+<span class="n">load_dotenv</span><span class="p">()</span>
+<span class="n">credential</span> <span class="o">=</span> <span class="n">AzureCliCredential</span><span class="p">()</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;OPENAI_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">credential</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span>
+    <span class="s2">&quot;https://cognitiveservices.azure.com/.default&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">token</span>
+<span class="c1"># Set to True if using OpenAI embeddings, False for Hugging Face embeddings</span>
+<span class="n">IS_OPENAI_EMBEDDING</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="DocumentHandler">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler">[docs]</a>
+<span class="k">class</span> <span class="nc">DocumentHandler</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handles operations related to document processing such as loading, preprocessing and splitting into manageable chunks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="n">metadata_file</span><span class="o">=</span><span class="s2">&quot;metadata.json&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the DocumentHandler with a file path for documents.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_path (str): The path to the directory of raw files to process.</span>
+<span class="sd">            metadata_file (str): Path to the JSON file storing document metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metadata_file</span> <span class="o">=</span> <span class="n">metadata_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_loader</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">text_splitter</span> <span class="o">=</span> <span class="n">RecursiveCharacterTextSplitter</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+                                                            <span class="n">chunk_overlap</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                                                            <span class="n">separators</span><span class="o">=</span><span class="p">[</span>
+                                                                <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;. &#39;</span><span class="p">,</span> <span class="s1">&#39;? &#39;</span><span class="p">,</span> <span class="s1">&#39;! &#39;</span><span class="p">],</span>
+                                                            <span class="n">keep_separator</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DocumentHandler.load_metadata">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler.load_metadata">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load metadata from a JSON file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: A dictionary containing the metadata of the documents. If no metadata file exists,</span>
+<span class="sd">                returns an empty dictionary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_file</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="DocumentHandler.save_metadata">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler.save_metadata">[docs]</a>
+    <span class="k">def</span> <span class="nf">save_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save metadata to a JSON file.</span>
+
+<span class="sd">         Args:</span>
+<span class="sd">            metadata (dict): A dictionary containing the metadata for each document processed.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_file</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DocumentHandler.check_documents">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler.check_documents">[docs]</a>
+    <span class="k">def</span> <span class="nf">check_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check each document to see if it needs embedding and update metadata for new documents.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: A list of file paths that are already present in the metadata, and will be excluded from the document loader.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_metadata</span><span class="p">()</span>
+        <span class="n">documents_repeated</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">):</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">file_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="ow">and</span> <span class="n">filename</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
+                <span class="n">metadata</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">documents_repeated</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Documents repeated: </span><span class="si">{</span><span class="n">documents_repeated</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">documents_repeated</span></div>
+
+
+<div class="viewcode-block" id="DocumentHandler.create_loader">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler.create_loader">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_loader</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a loader for unstructured files with specific text cleaning post-processors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (str): The path to the directory of raw files to process.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            DirectoryLoader: A loader configured for handling unstructured files.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">DirectoryLoader</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span>
+                <span class="n">exclude</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">check_documents</span><span class="p">(),</span>
+                <span class="n">loader_cls</span><span class="o">=</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">UnstructuredFileLoader</span><span class="p">(</span>
+                    <span class="n">p</span><span class="p">,</span>
+                    <span class="n">post_processors</span><span class="o">=</span><span class="p">[</span>
+                        <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="n">clean</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">bullets</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">extra_whitespace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                           <span class="n">dashes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trailing_punctuation</span><span class="o">=</span><span class="kc">True</span>
+                                           <span class="p">),</span>
+                        <span class="k">lambda</span> <span class="n">text</span><span class="p">:</span> <span class="n">group_broken_paragraphs</span><span class="p">(</span>
+                            <span class="n">text</span><span class="p">,</span> <span class="n">paragraph_split</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\s*\n\s*)</span><span class="si">{5}</span><span class="s2">&quot;</span><span class="p">))</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error creating loader for </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="DocumentHandler.load_documents">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler.load_documents">[docs]</a>
+    <span class="k">def</span> <span class="nf">load_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads documents using the provided loader.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: A list of loaded documents.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DocumentHandler.split_documents">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.DocumentHandler.split_documents">[docs]</a>
+    <span class="k">def</span> <span class="nf">split_documents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">documents</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Splits loaded documents into smaller chunks based on specified separators.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            documents (list): The documents to split.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list: A list of document chunks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text_splitter</span><span class="o">.</span><span class="n">split_documents</span><span class="p">(</span><span class="n">documents</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EmbeddingManager">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.EmbeddingManager">[docs]</a>
+<span class="k">class</span> <span class="nc">EmbeddingManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manages embedding generation and vector storage operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collection_path</span><span class="p">,</span> <span class="n">embedding_function</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the EmbeddingManager with an embedding function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            collection_path (str): The collection path of vectorstore.</span>
+<span class="sd">            embedding_function (callable): Function to generate embeddings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">collection_path</span> <span class="o">=</span> <span class="n">collection_path</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span> <span class="o">=</span> <span class="n">embedding_function</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to initialize EmbeddingManager: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+<div class="viewcode-block" id="EmbeddingManager.setup_vectorstore">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.EmbeddingManager.setup_vectorstore">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_vectorstore</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">docs_split</span><span class="p">,</span> <span class="n">persist</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets up or loads a vectorstore and stores the embedded document chunks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            docs_split (list): Document chunks to embed and store.</span>
+<span class="sd">            persist (bool):  If True, persist data on disk.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">persist</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_path</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">Chroma</span><span class="p">(</span>
+                <span class="n">persist_directory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_path</span><span class="p">,</span> <span class="n">embedding_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span> <span class="o">=</span> <span class="n">Chroma</span><span class="o">.</span><span class="n">from_documents</span><span class="p">(</span>
+                <span class="n">docs_split</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_function</span><span class="p">,</span> <span class="n">persist_directory</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">collection_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vectorstore</span><span class="o">.</span><span class="n">persist</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../path_embedding.html#path_embedding.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># Document processing</span>
+    <span class="n">document_handler</span> <span class="o">=</span> <span class="n">DocumentHandler</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span><span class="p">)</span>
+    <span class="n">documents</span> <span class="o">=</span> <span class="n">document_handler</span><span class="o">.</span><span class="n">load_documents</span><span class="p">()</span>
+    <span class="n">documents_split</span> <span class="o">=</span> <span class="n">document_handler</span><span class="o">.</span><span class="n">split_documents</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">documents_split</span><span class="p">))</span>
+
+    <span class="c1"># Embedding and vector storage management</span>
+    <span class="k">if</span> <span class="n">IS_OPENAI_EMBEDDING</span><span class="p">:</span>
+        <span class="n">embedding_function</span> <span class="o">=</span> <span class="n">AzureOpenAIEmbeddings</span><span class="p">(</span>
+            <span class="n">azure_deployment</span><span class="o">=</span><span class="s2">&quot;text-embedding-ada-002&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">embedding_function</span> <span class="o">=</span> <span class="n">HuggingFaceEmbeddings</span><span class="p">(</span>
+            <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;embedding_models/baai/bge-small-en-v1.5&quot;</span><span class="p">)</span>
+    <span class="n">embedding_manager</span> <span class="o">=</span> <span class="n">EmbeddingManager</span><span class="p">(</span>
+        <span class="n">collection_path</span><span class="o">=</span><span class="s2">&quot;chroma_index&quot;</span><span class="p">,</span> <span class="n">embedding_function</span><span class="o">=</span><span class="n">embedding_function</span><span class="p">)</span>
+    <span class="n">embedding_manager</span><span class="o">.</span><span class="n">setup_vectorstore</span><span class="p">(</span>
+        <span class="n">docs_split</span><span class="o">=</span><span class="n">documents_split</span><span class="p">,</span> <span class="n">persist</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Wen Yin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

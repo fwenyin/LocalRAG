@@ -1,5 +1,7 @@
 archive/
 chroma_index/
+embedding_models/
 raw/
 .env
+metadata.json
 record_manager_cache.sql

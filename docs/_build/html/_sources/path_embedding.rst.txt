@@ -1,7 +1,7 @@
-query module
+path\_embedding module
 ============
 
-.. automodule:: query
+.. automodule:: path_embedding
    :members:
    :undoc-members:
    :show-inheritance:
